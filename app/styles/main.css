@@ -21,7 +21,7 @@ body {
 /* Main content layout */
 .main-content {
     display: grid;
-    grid-template-columns: 1fr 400px;
+    grid-template-columns: 4fr 1fr;
     gap: 2rem;
     margin-bottom: 2rem;
 }
