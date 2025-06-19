@@ -18,32 +18,48 @@ body {
     padding: 1rem;
 }
 
-/* Header styles */
-header {
+/* Main content layout */
+.main-content {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.left-panel,
+.right-panel {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 1.5rem;
+}
+
+/* Table header styles */
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.table-header h2 {
+    color: #2c3e50;
+    margin: 0;
+}
+
+/* Bottom controls styles */
+.bottom-controls {
     background: white;
     padding: 1.5rem;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    margin-bottom: 2rem;
-}
-
-header h1 {
-    color: #2c3e50;
-    margin-bottom: 1rem;
     text-align: center;
-}
-
-.controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 1rem;
 }
 
 .reverse-lookup {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
 }
 
@@ -58,46 +74,6 @@ header h1 {
     outline: none;
     border-color: #3498db;
 }
-
-/* Button styles */
-.btn {
-    background: #3498db;
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: background-color 0.3s;
-}
-
-.btn:hover {
-    background: #2980b9;
-}
-
-.btn:disabled {
-    background: #bdc3c7;
-    cursor: not-allowed;
-}
-
-/* Main content layout */
-.main-content {
-    display: grid;
-    grid-template-columns: 1fr 400px;
-    gap: 2rem;
-}
-
-.left-panel,
-.right-panel {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    padding: 1.5rem;
-}
-
-/* Z-Table styles */
-.table-container h2 {
-    color: #2c3e50;
     margin-bottom: 1rem;
     text-align: center;
 }
@@ -275,15 +251,37 @@ header h1 {
     outline-offset: 1px;
 }
 
+/* Button styles */
+.btn {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.3s;
+}
+
+.btn:hover {
+    background: #2980b9;
+}
+
+.btn:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+}
+
 /* Responsive design */
 @media (max-width: 1024px) {
     .main-content {
         grid-template-columns: 1fr;
     }
     
-    .controls {
+    .table-header {
         flex-direction: column;
-        align-items: stretch;
+        gap: 1rem;
+        text-align: center;
     }
     
     .reverse-lookup {
@@ -296,12 +294,9 @@ header h1 {
         padding: 0.5rem;
     }
     
-    header {
-        padding: 1rem;
-    }
-    
     .left-panel,
-    .right-panel {
+    .right-panel,
+    .bottom-controls {
         padding: 1rem;
     }
     
@@ -312,6 +307,16 @@ header h1 {
     .z-table th,
     .z-table td {
         padding: 0.25rem;
+    }
+    
+    .reverse-lookup {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .reverse-lookup input {
+        width: 100%;
+        max-width: 200px;
     }
 }
 
