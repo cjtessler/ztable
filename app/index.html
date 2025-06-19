@@ -44,24 +44,29 @@
                         <p>Probability: <span id="selectedProb">None</span></p>
                         <p>Area (Left-tail): <span id="areaValue">None</span></p>
                     </div>
-                </div>                <div class="saved-selections">
+                </div>
+                <div class="saved-selections">
                     <h3>Saved Selections</h3>
                     <div class="saved-controls">
                         <button id="saveSelection" class="btn" disabled>Save Current Selection</button>
-                        <button id="clearAllSelections" class="btn trash-btn" title="Delete all saved selections">🗑️</button>
+                        <button id="clearAllSelections" class="btn trash-btn"
+                            title="Delete all saved selections">🗑️</button>
                     </div>
                     <div id="savedList" class="saved-list">
                         <!-- Saved selections will be displayed here -->
                     </div>
                 </div>
             </div>
-        </main>
-
-        <footer class="bottom-controls">
+        </main>        <footer class="bottom-controls">
             <div class="reverse-lookup">
                 <label for="zInput">Z-Score Lookup:</label>
-                <input type="number" id="zInput" step="0.01" min="-3.4" max="3.4" placeholder="Enter z-score">
+                <input type="number" id="zInput" step="0.01" min="-3.5" max="3.5" placeholder="Enter z-score">
                 <button id="lookupBtn" class="btn">Lookup</button>
+            </div>
+            <div class="area-lookup">
+                <label for="areaInput">Area Lookup:</label>
+                <input type="number" id="areaInput" step="0.0001" min="0.0001" max="0.9999" placeholder="Enter area (0.0001-0.9999)">
+                <button id="areaLookupBtn" class="btn">Find Z-Score</button>
             </div>
         </footer>
     </div>

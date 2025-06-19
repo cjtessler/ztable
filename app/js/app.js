@@ -23,10 +23,13 @@ class StandardNormalApp {
         // Font size control elements
         this.decreaseFontBtn = document.getElementById('decreaseFontSize');
         this.increaseFontBtn = document.getElementById('increaseFontSize');
-        
-        // Input elements
+          // Input elements
         this.zInput = document.getElementById('zInput');
         this.lookupBtn = document.getElementById('lookupBtn');
+        
+        // Area lookup elements
+        this.areaInput = document.getElementById('areaInput');
+        this.areaLookupBtn = document.getElementById('areaLookupBtn');
         
         // Info display elements
         this.selectedZSpan = document.getElementById('selectedZ');
@@ -60,13 +63,22 @@ class StandardNormalApp {
         // Reverse lookup
         this.lookupBtn.addEventListener('click', () => {
             this.performReverseLookup();
-        });
-
-        this.zInput.addEventListener('keypress', (e) => {
+        });        this.zInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 this.performReverseLookup();
             }
-        });        // Save selection button
+        });
+
+        // Area lookup
+        this.areaLookupBtn.addEventListener('click', () => {
+            this.performAreaLookup();
+        });
+
+        this.areaInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.performAreaLookup();
+            }
+        });// Save selection button
         this.saveSelectionBtn.addEventListener('click', () => {
             this.saveCurrentSelection();
         });
@@ -251,9 +263,8 @@ class StandardNormalApp {
 
     performReverseLookup() {
         const zValue = parseFloat(this.zInput.value);
-        
-        if (isNaN(zValue) || !zTableData.isValidZScore(zValue)) {
-            alert('Please enter a valid z-score between -3.4 and 3.4');
+          if (isNaN(zValue) || !zTableData.isValidZScore(zValue)) {
+            alert('Please enter a valid z-score between -3.5 and 3.5');
             return;
         }
 
@@ -287,7 +298,75 @@ class StandardNormalApp {
             this.selectedZ = zValue;
             this.selectedProb = probability;
             this.updateInfoDisplay();
-            this.normalCurve.updateCurve(zValue, shouldUseNegativeTable);
+            this.normalCurve.updateCurve(zValue, shouldUseNegativeTable);            this.saveSelectionBtn.disabled = false;
+        }
+    }    performAreaLookup() {
+        const areaValue = parseFloat(this.areaInput.value);
+        
+        // Validate input
+        if (isNaN(areaValue) || areaValue <= 0 || areaValue >= 1) {
+            alert('Please enter a valid area (probability) between 0.0001 and 0.9999');
+            return;
+        }
+
+        // Special validation for extreme values
+        if (areaValue < 0.0001 || areaValue > 0.9999) {
+            alert('Area must be between 0.0001 and 0.9999 for accurate lookup in the z-table');
+            return;
+        }
+
+        // Find the closest z-score for the given area
+        // We need to search both tables to find the best match
+        let bestZ = 0;
+        let bestDiff = Infinity;
+        let useNegativeTable = false;
+
+        // Search negative table (z < 0, probabilities < 0.5)
+        const negativeZ = zTableData.getZScore(areaValue, true);
+        const negativeProbability = zTableData.getProbability(negativeZ, true);
+        const negativeDiff = Math.abs(negativeProbability - areaValue);
+
+        // Search positive table (z >= 0, probabilities >= 0.5)  
+        const positiveZ = zTableData.getZScore(areaValue, false);
+        const positiveProbability = zTableData.getProbability(positiveZ, false);
+        const positiveDiff = Math.abs(positiveProbability - areaValue);
+
+        // Choose the table with the closest match
+        if (negativeDiff <= positiveDiff) {
+            bestZ = negativeZ;
+            useNegativeTable = true;
+        } else {
+            bestZ = positiveZ;
+            useNegativeTable = false;
+        }
+
+        // Switch to the appropriate table if necessary
+        if (useNegativeTable !== this.isNegativeTable) {
+            this.isNegativeTable = useNegativeTable;
+            this.renderTable();
+        }
+
+        // Find and select the corresponding cell
+        const targetZFormatted = bestZ.toFixed(2);
+        const targetCell = this.zTable.querySelector(`[data-z="${targetZFormatted}"]`);
+        
+        if (targetCell) {
+            this.selectCell(targetCell);
+            
+            // Scroll cell into view
+            targetCell.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center',
+                inline: 'center'
+            });
+        } else {
+            // Fallback: Update displays without cell selection
+            const actualProbability = zTableData.getProbability(bestZ, useNegativeTable);
+            
+            this.selectedZ = bestZ;
+            this.selectedProb = actualProbability;
+            this.updateInfoDisplay();
+            this.normalCurve.updateCurve(bestZ, useNegativeTable);
             this.saveSelectionBtn.disabled = false;
         }
     }

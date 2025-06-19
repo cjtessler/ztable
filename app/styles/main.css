@@ -73,23 +73,29 @@ body {
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     text-align: center;
+    display: flex;
+    justify-content: space-around;
+    gap: 1rem;
 }
 
-.reverse-lookup {
+.reverse-lookup,
+.area-lookup {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
 }
 
-.reverse-lookup input {
+.reverse-lookup input,
+.area-lookup input {
     padding: 0.5rem;
     border: 2px solid #ddd;
     border-radius: 4px;
-    width: 120px;
+    width: 200px;
 }
 
-.reverse-lookup input:focus {
+.reverse-lookup input:focus,
+.area-lookup input:focus {
     outline: none;
     border-color: #3498db;
 }
@@ -426,8 +432,8 @@ body {
     .z-table td {
         padding: 0.25rem;
     }
-    
-    .reverse-lookup {
+      .reverse-lookup,
+    .area-lookup {
         flex-direction: column;
         gap: 0.75rem;
     }

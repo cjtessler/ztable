@@ -1,5 +1,5 @@
 // Standard Normal Distribution Z-Table Data
-// Covers z-scores from -3.4 to 3.4 with 0.01 increments
+// Covers z-scores from -3.5 to 3.5 with 0.01 increments
 
 class ZTableData {
     constructor() {
@@ -11,8 +11,8 @@ class ZTableData {
     // Generate z-table using the standard normal CDF approximation
     generateZTable(isNegative = false) {
         const table = {};
-        const startZ = isNegative ? -3.4 : 0.0;
-        const endZ = isNegative ? 0.0 : 3.4;
+        const startZ = isNegative ? -3.5 : 0.0;
+        const endZ = isNegative ? 0.0 : 3.5;
         
         for (let z = startZ; z <= endZ; z += 0.1) {
             const zKey = Math.abs(z).toFixed(1);
@@ -61,28 +61,45 @@ class ZTableData {
         
         // Fallback to direct calculation if not in table
         return this.standardNormalCDF(z);
-    }
-
-    // Get z-score from probability (inverse lookup)
+    }    // Get z-score from probability (inverse lookup)
     getZScore(probability, isNegative = false) {
-        const table = isNegative ? this.negativeTable : this.positiveTable;
-        let closestZ = 0;
+        // For negative table (z < 0), we search probabilities < 0.5
+        // For positive table (z >= 0), we search probabilities >= 0.5
+        
+        let bestZ = 0;
         let minDiff = Infinity;
         
-        for (const zInt in table) {
-            for (const zDec in table[zInt]) {
-                const prob = parseFloat(table[zInt][zDec]);
-                const diff = Math.abs(prob - probability);
-                
-                if (diff < minDiff) {
-                    minDiff = diff;
-                    const z = parseFloat(zInt) + (parseInt(zDec) / 100);
-                    closestZ = isNegative ? -z : z;
+        if (isNegative) {
+            // Search negative table for probabilities < 0.5
+            for (const zInt in this.negativeTable) {
+                for (const zDec in this.negativeTable[zInt]) {
+                    const prob = parseFloat(this.negativeTable[zInt][zDec]);
+                    const diff = Math.abs(prob - probability);
+                    
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        const z = parseFloat(zInt) + (parseInt(zDec) / 100);
+                        bestZ = -z; // Negative z-score
+                    }
+                }
+            }
+        } else {
+            // Search positive table for probabilities >= 0.5
+            for (const zInt in this.positiveTable) {
+                for (const zDec in this.positiveTable[zInt]) {
+                    const prob = parseFloat(this.positiveTable[zInt][zDec]);
+                    const diff = Math.abs(prob - probability);
+                    
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        const z = parseFloat(zInt) + (parseInt(zDec) / 100);
+                        bestZ = z; // Positive z-score
+                    }
                 }
             }
         }
         
-        return closestZ;
+        return bestZ;
     }
 
     // Get table data for rendering
@@ -103,11 +120,9 @@ class ZTableData {
     // Get column headers (hundredths)
     getColumnHeaders() {
         return ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09'];
-    }
-
-    // Validate z-score is within range
+    }    // Validate z-score is within range
     isValidZScore(z) {
-        return z >= -3.4 && z <= 3.4;
+        return z >= -3.5 && z <= 3.5;
     }
 
     // Format z-score for display
