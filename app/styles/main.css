@@ -222,13 +222,25 @@ header h1 {
 .saved-item {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     padding: 0.5rem;
     border-bottom: 1px solid #eee;
     font-size: 0.9rem;
 }
 
+.saved-item:hover {
+    background-color: #f8f9fa;
+}
+
 .saved-item:last-child {
     border-bottom: none;
+}
+
+.saved-item-content {
+    display: flex;
+    justify-content: space-between;
+    flex: 1;
+    cursor: pointer;
 }
 
 .saved-item .z-value {
@@ -238,6 +250,27 @@ header h1 {
 
 .saved-item .prob-value {
     color: #666;
+}
+
+.delete-btn {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    margin-left: 0.5rem;
+    transition: background-color 0.3s;
+}
+
+.delete-btn:hover {
+    background: #c0392b;
+}
+
+.delete-btn:focus {
+    outline: 2px solid #e74c3c;
+    outline-offset: 1px;
 }
 
 /* Responsive design */

@@ -278,6 +278,14 @@ class StandardNormalApp {
         }
     }
 
+    deleteSelection(index) {
+        if (index >= 0 && index < this.savedSelections.length) {
+            this.savedSelections.splice(index, 1);
+            this.saveTolocalStorage();
+            this.renderSavedSelections();
+        }
+    }
+
     renderSavedSelections() {
         this.savedList.innerHTML = '';
 
@@ -290,11 +298,13 @@ class StandardNormalApp {
             emptyMsg.style.padding = '1rem';
             this.savedList.appendChild(emptyMsg);
             return;
-        }
-
-        this.savedSelections.forEach((selection, index) => {
+        }        this.savedSelections.forEach((selection, index) => {
             const item = document.createElement('div');
             item.className = 'saved-item';
+
+            // Create content container for the clickable area
+            const content = document.createElement('div');
+            content.className = 'saved-item-content';
 
             const zValue = document.createElement('span');
             zValue.className = 'z-value';
@@ -304,17 +314,31 @@ class StandardNormalApp {
             probValue.className = 'prob-value';
             probValue.textContent = `P = ${zTableData.formatProbability(selection.probability)}`;
 
-            item.appendChild(zValue);
-            item.appendChild(probValue);
+            content.appendChild(zValue);
+            content.appendChild(probValue);
 
             // Add click handler to re-select this value
-            item.addEventListener('click', () => {
+            content.addEventListener('click', () => {
                 this.zInput.value = selection.zScore;
                 this.performReverseLookup();
             });
 
-            item.style.cursor = 'pointer';
-            item.title = 'Click to select this z-score';
+            content.title = 'Click to select this z-score';
+
+            // Create delete button
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.textContent = '×';
+            deleteBtn.title = 'Delete this saved selection';
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent triggering the item click
+                if (confirm('Are you sure you want to delete this saved selection?')) {
+                    this.deleteSelection(index);
+                }
+            });
+
+            item.appendChild(content);
+            item.appendChild(deleteBtn);
 
             this.savedList.appendChild(item);
         });
