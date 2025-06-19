@@ -160,12 +160,12 @@ header h1 {
 
 .z-table .highlighted-row,
 .z-table th.highlighted-row {
-    background: #e8f5e8;
+    background: #e8f5e8 !important;
 }
 
 .z-table .highlighted-col,
 .z-table th.highlighted-col {
-    background: #e8f5e8;
+    background: #e8f5e8 !important;
 }
 
 /* Curve section styles */
