@@ -1,22 +1,28 @@
 // Main Application Logic for Standard Normal Distribution Tool
 class StandardNormalApp {
     constructor() {
-        this.isNegativeTable = false;
-        this.selectedZ = null;
+        this.isNegativeTable = false;        this.selectedZ = null;
         this.selectedProb = null;
         this.selectedCell = null;
         this.savedSelections = [];
+        this.tableFontSize = 0.85; // Default font size in rem
         
         this.initializeElements();
         this.loadSavedSelections();
         this.setupEventListeners();
         this.renderTable();
         this.normalCurve = new NormalCurve('normalCurve');
-    }    initializeElements() {
+    }
+
+    initializeElements() {
         // Table elements
         this.zTable = document.getElementById('zTable');
         this.tableTitle = document.getElementById('tableTitle');
         this.toggleTableBtn = document.getElementById('toggleTable');
+        
+        // Font size control elements
+        this.decreaseFontBtn = document.getElementById('decreaseFontSize');
+        this.increaseFontBtn = document.getElementById('increaseFontSize');
         
         // Input elements
         this.zInput = document.getElementById('zInput');
@@ -37,10 +43,18 @@ class StandardNormalApp {
         this.isExpanded = false;
     }
 
-    setupEventListeners() {
-        // Toggle table button
+    setupEventListeners() {        // Toggle table button
         this.toggleTableBtn.addEventListener('click', () => {
             this.toggleTable();
+        });
+
+        // Font size control buttons
+        this.decreaseFontBtn.addEventListener('click', () => {
+            this.decreaseTableFontSize();
+        });
+
+        this.increaseFontBtn.addEventListener('click', () => {
+            this.increaseTableFontSize();
         });
 
         // Reverse lookup
@@ -52,7 +66,7 @@ class StandardNormalApp {
             if (e.key === 'Enter') {
                 this.performReverseLookup();
             }
-        });        // Save selection button
+        });// Save selection button
         this.saveSelectionBtn.addEventListener('click', () => {
             this.saveCurrentSelection();
         });
@@ -129,13 +143,14 @@ class StandardNormalApp {
             });
 
             this.zTable.appendChild(tr);
-        });
-
-        // Update table title
+        });        // Update table title
         this.tableTitle.textContent = this.isNegativeTable ? 'Negative Z-Table' : 'Positive Z-Table';
         this.toggleTableBtn.textContent = this.isNegativeTable ? 
             'Switch to Positive Z-Table' : 'Switch to Negative Z-Table';
-    }    selectCell(cell) {
+        
+        // Apply current font size
+        this.updateTableFontSize();
+    }selectCell(cell) {
         // Clear previous selection
         this.clearSelection();
 
@@ -207,6 +222,26 @@ class StandardNormalApp {
         this.renderTable();
         this.updateInfoDisplay();
         this.normalCurve.clearSelection();
+    }
+
+    decreaseTableFontSize() {
+        // Minimum font size of 0.5rem
+        if (this.tableFontSize > 0.5) {
+            this.tableFontSize -= 0.1;
+            this.updateTableFontSize();
+        }
+    }
+
+    increaseTableFontSize() {
+        // Maximum font size of 1.5rem
+        if (this.tableFontSize < 1.5) {
+            this.tableFontSize += 0.1;
+            this.updateTableFontSize();
+        }
+    }
+
+    updateTableFontSize() {
+        this.zTable.style.fontSize = this.tableFontSize + 'rem';
     }
 
     performReverseLookup() {
