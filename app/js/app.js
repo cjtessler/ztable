@@ -347,14 +347,14 @@ class StandardNormalApp {
             });
 
             item.appendChild(content);
-            item.appendChild(deleteBtn);            this.savedList.appendChild(item);
+            item.appendChild(deleteBtn);
+            this.savedList.appendChild(item);
         });
     }
 
     toggleCurveExpansion() {
         this.isExpanded = !this.isExpanded;
-        
-        if (this.isExpanded) {
+          if (this.isExpanded) {
             // Add expanded class
             this.curveSection.classList.add('curve-expanded');
             this.expandCurveBtn.textContent = 'Close';
@@ -368,16 +368,21 @@ class StandardNormalApp {
             canvas.dataset.originalWidth = originalWidth;
             canvas.dataset.originalHeight = originalHeight;
             
-            // Set larger dimensions
-            canvas.width = Math.min(window.innerWidth * 0.8, 1200);
-            canvas.height = Math.min(window.innerWidth * 0.6, 800);
+            // Set much larger dimensions for expanded view
+            const expandedWidth = Math.min(window.innerWidth * 0.9, 1600);
+            const expandedHeight = Math.min(window.innerHeight * 0.65, 900);
             
-            // Redraw the curve with new dimensions
-            if (this.normalCurve) {
-                this.normalCurve.resize();
-                if (this.selectedZ !== null) {
-                    this.normalCurve.updateCurve(this.selectedZ, this.isNegativeTable);
-                }
+            // Update both canvas attributes and style
+            canvas.width = expandedWidth;
+            canvas.height = expandedHeight;
+            canvas.style.width = expandedWidth + 'px';
+            canvas.style.height = expandedHeight + 'px';
+              // Force a redraw by recreating the NormalCurve instance
+            this.normalCurve = new NormalCurve('normalCurve');
+            
+            // Restore the current selection if any
+            if (this.selectedZ !== null) {
+                this.normalCurve.updateCurve(this.selectedZ, this.isNegativeTable);
             }
         } else {
             // Remove expanded class
@@ -389,15 +394,18 @@ class StandardNormalApp {
             const originalWidth = canvas.dataset.originalWidth || 400;
             const originalHeight = canvas.dataset.originalHeight || 300;
             
+            // Update both canvas attributes and style
             canvas.width = originalWidth;
             canvas.height = originalHeight;
+            canvas.style.width = originalWidth + 'px';
+            canvas.style.height = originalHeight + 'px';
             
-            // Redraw the curve with original dimensions
-            if (this.normalCurve) {
-                this.normalCurve.resize();
-                if (this.selectedZ !== null) {
-                    this.normalCurve.updateCurve(this.selectedZ, this.isNegativeTable);
-                }
+            // Force a redraw by recreating the NormalCurve instance
+            this.normalCurve = new NormalCurve('normalCurve');
+            
+            // Restore the current selection if any
+            if (this.selectedZ !== null) {
+                this.normalCurve.updateCurve(this.selectedZ, this.isNegativeTable);
             }
         }
     }
