@@ -32,9 +32,9 @@ class StandardNormalApp {
         this.selectedZSpan = document.getElementById('selectedZ');
         this.selectedProbSpan = document.getElementById('selectedProb');
         this.areaValueSpan = document.getElementById('areaValue');
-        
-        // Saved selections elements
+          // Saved selections elements
         this.saveSelectionBtn = document.getElementById('saveSelection');
+        this.clearAllSelectionsBtn = document.getElementById('clearAllSelections');
         this.savedList = document.getElementById('savedList');
         
         // Curve expand elements
@@ -66,9 +66,14 @@ class StandardNormalApp {
             if (e.key === 'Enter') {
                 this.performReverseLookup();
             }
-        });// Save selection button
+        });        // Save selection button
         this.saveSelectionBtn.addEventListener('click', () => {
             this.saveCurrentSelection();
+        });
+
+        // Clear all selections button
+        this.clearAllSelectionsBtn.addEventListener('click', () => {
+            this.clearAllSelections();
         });
 
         // Expand curve button
@@ -320,9 +325,7 @@ class StandardNormalApp {
         } catch (e) {
             console.error('Error saving selections:', e);
         }
-    }
-
-    deleteSelection(index) {
+    }    deleteSelection(index) {
         if (index >= 0 && index < this.savedSelections.length) {
             this.savedSelections.splice(index, 1);
             this.saveTolocalStorage();
@@ -330,8 +333,21 @@ class StandardNormalApp {
         }
     }
 
-    renderSavedSelections() {
+    clearAllSelections() {
+        if (this.savedSelections.length === 0) {
+            return; // Nothing to clear
+        }
+        
+        if (confirm('Are you sure you want to delete all saved selections? This action cannot be undone.')) {
+            this.savedSelections = [];
+            this.saveTolocalStorage();
+            this.renderSavedSelections();
+        }
+    }    renderSavedSelections() {
         this.savedList.innerHTML = '';
+
+        // Enable/disable the clear all button based on whether there are selections
+        this.clearAllSelectionsBtn.disabled = this.savedSelections.length === 0;
 
         if (this.savedSelections.length === 0) {
             const emptyMsg = document.createElement('div');
@@ -342,7 +358,7 @@ class StandardNormalApp {
             emptyMsg.style.padding = '1rem';
             this.savedList.appendChild(emptyMsg);
             return;
-        }        this.savedSelections.forEach((selection, index) => {
+        }this.savedSelections.forEach((selection, index) => {
             const item = document.createElement('div');
             item.className = 'saved-item';
 

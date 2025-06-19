@@ -279,6 +279,28 @@ body {
     margin-bottom: 1rem;
 }
 
+.saved-controls {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.trash-btn {
+    background: #e74c3c;
+    padding: 0.75rem;
+    min-width: auto;
+    font-size: 1rem;
+}
+
+.trash-btn:hover {
+    background: #c0392b;
+}
+
+.trash-btn:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+}
+
 .saved-list {
     max-height: 120px;
     overflow-y: auto;

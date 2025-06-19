@@ -44,11 +44,12 @@
                         <p>Probability: <span id="selectedProb">None</span></p>
                         <p>Area (Left-tail): <span id="areaValue">None</span></p>
                     </div>
-                </div>
-
-                <div class="saved-selections">
+                </div>                <div class="saved-selections">
                     <h3>Saved Selections</h3>
-                    <button id="saveSelection" class="btn" disabled>Save Current Selection</button>
+                    <div class="saved-controls">
+                        <button id="saveSelection" class="btn" disabled>Save Current Selection</button>
+                        <button id="clearAllSelections" class="btn trash-btn" title="Delete all saved selections">🗑️</button>
+                    </div>
                     <div id="savedList" class="saved-list">
                         <!-- Saved selections will be displayed here -->
                     </div>
