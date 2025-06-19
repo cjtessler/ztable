@@ -12,9 +12,7 @@ class StandardNormalApp {
         this.setupEventListeners();
         this.renderTable();
         this.normalCurve = new NormalCurve('normalCurve');
-    }
-
-    initializeElements() {
+    }    initializeElements() {
         // Table elements
         this.zTable = document.getElementById('zTable');
         this.tableTitle = document.getElementById('tableTitle');
@@ -32,6 +30,11 @@ class StandardNormalApp {
         // Saved selections elements
         this.saveSelectionBtn = document.getElementById('saveSelection');
         this.savedList = document.getElementById('savedList');
+        
+        // Curve expand elements
+        this.expandCurveBtn = document.getElementById('expandCurve');
+        this.curveSection = document.querySelector('.curve-section');
+        this.isExpanded = false;
     }
 
     setupEventListeners() {
@@ -49,11 +52,21 @@ class StandardNormalApp {
             if (e.key === 'Enter') {
                 this.performReverseLookup();
             }
-        });
-
-        // Save selection button
+        });        // Save selection button
         this.saveSelectionBtn.addEventListener('click', () => {
             this.saveCurrentSelection();
+        });
+
+        // Expand curve button
+        this.expandCurveBtn.addEventListener('click', () => {
+            this.toggleCurveExpansion();
+        });
+
+        // Close expanded view on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.isExpanded) {
+                this.toggleCurveExpansion();
+            }
         });
 
         // Window resize handler for canvas
@@ -334,10 +347,59 @@ class StandardNormalApp {
             });
 
             item.appendChild(content);
-            item.appendChild(deleteBtn);
-
-            this.savedList.appendChild(item);
+            item.appendChild(deleteBtn);            this.savedList.appendChild(item);
         });
+    }
+
+    toggleCurveExpansion() {
+        this.isExpanded = !this.isExpanded;
+        
+        if (this.isExpanded) {
+            // Add expanded class
+            this.curveSection.classList.add('curve-expanded');
+            this.expandCurveBtn.textContent = 'Close';
+            
+            // Resize canvas for larger view
+            const canvas = document.getElementById('normalCurve');
+            const originalWidth = canvas.width;
+            const originalHeight = canvas.height;
+            
+            // Store original dimensions
+            canvas.dataset.originalWidth = originalWidth;
+            canvas.dataset.originalHeight = originalHeight;
+            
+            // Set larger dimensions
+            canvas.width = Math.min(window.innerWidth * 0.8, 1200);
+            canvas.height = Math.min(window.innerWidth * 0.6, 800);
+            
+            // Redraw the curve with new dimensions
+            if (this.normalCurve) {
+                this.normalCurve.resize();
+                if (this.selectedZ !== null) {
+                    this.normalCurve.updateCurve(this.selectedZ, this.isNegativeTable);
+                }
+            }
+        } else {
+            // Remove expanded class
+            this.curveSection.classList.remove('curve-expanded');
+            this.expandCurveBtn.textContent = 'Expand';
+            
+            // Restore original canvas dimensions
+            const canvas = document.getElementById('normalCurve');
+            const originalWidth = canvas.dataset.originalWidth || 400;
+            const originalHeight = canvas.dataset.originalHeight || 300;
+            
+            canvas.width = originalWidth;
+            canvas.height = originalHeight;
+            
+            // Redraw the curve with original dimensions
+            if (this.normalCurve) {
+                this.normalCurve.resize();
+                if (this.selectedZ !== null) {
+                    this.normalCurve.updateCurve(this.selectedZ, this.isNegativeTable);
+                }
+            }
+        }
     }
 }
 

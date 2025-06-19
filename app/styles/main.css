@@ -149,10 +149,21 @@ body {
     margin-bottom: 2rem;
 }
 
+.curve-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
 .curve-section h3 {
     color: #2c3e50;
-    margin-bottom: 1rem;
-    text-align: center;
+    margin: 0;
+}
+
+.expand-btn {
+    font-size: 0.8rem;
+    padding: 0.5rem 1rem;
 }
 
 .curve-container {
@@ -164,6 +175,60 @@ body {
     border: 1px solid #ddd;
     border-radius: 4px;
     background: white;
+}
+
+/* Expanded curve view */
+.curve-expanded {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+}
+
+.curve-expanded .curve-header {
+    color: white;
+    margin-bottom: 2rem;
+}
+
+.curve-expanded .curve-header h3 {
+    color: white;
+    font-size: 1.5rem;
+}
+
+.curve-expanded .curve-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-height: 70vh;
+}
+
+.curve-expanded #normalCurve {
+    max-width: 90vw;
+    max-height: 60vh;
+    width: auto;
+    height: auto;
+    border: 2px solid #fff;
+}
+
+.curve-expanded .curve-info {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border-left: 4px solid #3498db;
+    margin-top: 2rem;
+    backdrop-filter: blur(10px);
+}
+
+.curve-expanded .curve-info span {
+    color: #87ceeb;
 }
 
 .curve-info {
