@@ -158,11 +158,13 @@ header h1 {
     font-weight: bold;
 }
 
-.z-table .highlighted-row {
+.z-table .highlighted-row,
+.z-table th.highlighted-row {
     background: #e8f5e8;
 }
 
-.z-table .highlighted-col {
+.z-table .highlighted-col,
+.z-table th.highlighted-col {
     background: #e8f5e8;
 }
 

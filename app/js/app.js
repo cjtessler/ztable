@@ -122,9 +122,7 @@ class StandardNormalApp {
         this.tableTitle.textContent = this.isNegativeTable ? 'Negative Z-Table' : 'Positive Z-Table';
         this.toggleTableBtn.textContent = this.isNegativeTable ? 
             'Switch to Positive Z-Table' : 'Switch to Negative Z-Table';
-    }
-
-    selectCell(cell) {
+    }    selectCell(cell) {
         // Clear previous selection
         this.clearSelection();
 
@@ -136,7 +134,7 @@ class StandardNormalApp {
         // Highlight cell, row, and column
         cell.classList.add('selected-cell');
         
-        // Highlight row
+        // Highlight row (including row header)
         const row = cell.parentElement;
         Array.from(row.children).forEach(td => {
             if (!td.classList.contains('selected-cell')) {
@@ -144,10 +142,10 @@ class StandardNormalApp {
             }
         });
 
-        // Highlight column
+        // Highlight column (including column header)
         const cellIndex = Array.from(row.children).indexOf(cell);
         const table = cell.closest('table');
-        Array.from(table.rows).forEach(tr => {
+        Array.from(table.rows).forEach((tr, rowIndex) => {
             const targetCell = tr.children[cellIndex];
             if (targetCell && !targetCell.classList.contains('selected-cell')) {
                 targetCell.classList.add('highlighted-col');
@@ -162,11 +160,9 @@ class StandardNormalApp {
 
         // Enable save button
         this.saveSelectionBtn.disabled = false;
-    }
-
-    clearSelection() {
-        // Remove all highlights
-        const allCells = this.zTable.querySelectorAll('td');
+    }clearSelection() {
+        // Remove all highlights from both td and th elements
+        const allCells = this.zTable.querySelectorAll('td, th');
         allCells.forEach(cell => {
             cell.classList.remove('selected-cell', 'highlighted-row', 'highlighted-col');
         });
