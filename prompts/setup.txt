@@ -1,0 +1,73 @@
+# Project Specification: Standard Normal Distribution Web Tool (v1)
+
+## Overview
+
+A client-side web application for teaching probability and statistics. Includes a standard normal distribution table, z-score highlighting, probability selection, reverse lookup, and a shaded normal curve visualization.
+
+## Users
+
+- Instructor (primary, lecture projection)
+- Students (secondary, optional exploration)
+
+## Core Features
+
+### 1. Standard Normal Table
+- Grid with row headers (z = x.0) and column headers (x.01 to x.09)
+- Every probability cell is clickable
+- Only one cell can be selected at a time
+- On selection:
+  - Highlight cell, row, and column
+  - Show corresponding z-score in a readout
+  - Option to save selected value to a list (stored in `localStorage`)
+
+### 2. Saved Selections
+- Store (z-score, probability) pairs in `localStorage`
+- Display saved list in UI
+- No export or delete needed in v1
+
+### 3. Shaded Normal Curve
+- Display a static or dynamically generated image of the normal curve
+- Shade the left-tail area for the selected z-score
+- Future versions will support right-tail and two-tail
+
+### 4. Reverse Lookup
+- Allow input of z-score
+- Highlight corresponding cell in table
+- Update shaded curve based on input
+
+### 5. Z-Table Toggle
+- Toggle between positive and negative z-tables
+- Update table view and shading accordingly
+
+## Data & Accuracy
+
+- 4-decimal precision
+- Use precomputed CSV table or math library (e.g., `math.js`)
+
+## UI & UX
+
+- Two-column layout:
+  - Left: z-table
+  - Right: curve + info
+- Minimalist design
+- Responsive on tablet and desktop (no mobile support in v1)
+
+## Technical Stack
+
+- Frontend: Vanilla JS or React
+- Visualization: SVG, Canvas, or any easy-to-implement method
+- Storage: `localStorage`
+- Backend: None (client-side only)
+- Hosting: GitHub Pages
+- Access: Public
+
+## Acceptance Criteria
+
+| Feature                  | Requirement                                                       |
+|--------------------------|--------------------------------------------------------------------|
+| Z-table rendered         | 4-decimal values covering z ∈ [-3.4, 3.4]                         |
+| Click to select          | One cell selectable; highlight row + column; show z-score         |
+| Save selection           | Store in `localStorage`; show saved list                          |
+| Curve shading            | Shade left-tail based on selected z                               |
+| Reverse lookup           | Input z-score; highlight table cell; update shading               |
+| Z-table toggle           | User can switch between positive and negative tables              |
