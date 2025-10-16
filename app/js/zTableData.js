@@ -54,18 +54,22 @@ class ZTableData {
   // Get probability for a given z-score
   getProbability(z, isNegative = false) {
     const table = isNegative ? this.negativeTable : this.positiveTable;
-    const zInt = Math.abs(z).toFixed(1);
-    const zDec = Math.round((Math.abs(z) % 0.1) * 100)
-      .toString()
-      .padStart(2, "0");
 
-    if (table[zInt] && table[zInt][zDec]) {
-      return parseFloat(table[zInt][zDec]);
+    // Round to nearest hundredth, then split into row/column like a printed z-table
+    const absZ = Math.abs(z);
+    const hundredthsInt = Math.round(absZ * 100); // e.g., 1.04 -> 104
+    const rowTenth = Math.floor(hundredthsInt / 10); // 104 -> 10  => "1.0"
+    const colDigit = hundredthsInt % 10; // 104 -> 4   => "04"
+
+    const zKey = (rowTenth / 10).toFixed(1); // "1.0"
+    const zDec = String(colDigit).padStart(2, "0"); // "04"
+
+    if (table[zKey] && table[zKey][zDec]) {
+      return parseFloat(table[zKey][zDec]);
     }
+    return this.standardNormalCDF(z); // fallback
+  }
 
-    // Fallback to direct calculation if not in table
-    return this.standardNormalCDF(z);
-  } // Get z-score from probability (inverse lookup)
   getZScore(probability, isNegative = false) {
     // For negative table (z < 0), we search probabilities < 0.5
     // For positive table (z >= 0), we search probabilities >= 0.5

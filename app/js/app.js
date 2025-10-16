@@ -1,544 +1,577 @@
 // Main Application Logic for Standard Normal Distribution Tool
 class StandardNormalApp {
-    constructor() {
-        this.isNegativeTable = false;        this.selectedZ = null;
-        this.selectedProb = null;
-        this.selectedCell = null;
+  constructor() {
+    this.isNegativeTable = false;
+    this.selectedZ = null;
+    this.selectedProb = null;
+    this.selectedCell = null;
+    this.savedSelections = [];
+    this.tableFontSize = 0.85; // Default font size in rem
+
+    this.initializeElements();
+    this.loadSavedSelections();
+    this.setupEventListeners();
+    this.renderTable();
+    this.normalCurve = new NormalCurve("normalCurve");
+  }
+
+  initializeElements() {
+    // Table elements
+    this.zTable = document.getElementById("zTable");
+    this.tableTitle = document.getElementById("tableTitle");
+    this.toggleTableBtn = document.getElementById("toggleTable");
+
+    // Font size control elements
+    this.decreaseFontBtn = document.getElementById("decreaseFontSize");
+    this.increaseFontBtn = document.getElementById("increaseFontSize");
+    // Input elements
+    this.zInput = document.getElementById("zInput");
+    this.lookupBtn = document.getElementById("lookupBtn");
+
+    // Area lookup elements
+    this.areaInput = document.getElementById("areaInput");
+    this.areaLookupBtn = document.getElementById("areaLookupBtn");
+
+    // Info display elements
+    this.selectedZSpan = document.getElementById("selectedZ");
+    this.selectedProbSpan = document.getElementById("selectedProb");
+    this.areaValueSpan = document.getElementById("areaValue");
+    // Saved selections elements
+    this.saveSelectionBtn = document.getElementById("saveSelection");
+    this.clearAllSelectionsBtn = document.getElementById("clearAllSelections");
+    this.savedList = document.getElementById("savedList");
+
+    // Curve expand elements
+    this.expandCurveBtn = document.getElementById("expandCurve");
+    this.curveSection = document.querySelector(".curve-section");
+    this.isExpanded = false;
+  }
+
+  setupEventListeners() {
+    // Toggle table button
+    this.toggleTableBtn.addEventListener("click", () => {
+      this.toggleTable();
+    });
+
+    // Font size control buttons
+    this.decreaseFontBtn.addEventListener("click", () => {
+      this.decreaseTableFontSize();
+    });
+
+    this.increaseFontBtn.addEventListener("click", () => {
+      this.increaseTableFontSize();
+    });
+
+    // Reverse lookup
+    this.lookupBtn.addEventListener("click", () => {
+      this.performReverseLookup();
+    });
+    this.zInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        this.performReverseLookup();
+      }
+    });
+
+    // Area lookup
+    this.areaLookupBtn.addEventListener("click", () => {
+      this.performAreaLookup();
+    });
+
+    this.areaInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        this.performAreaLookup();
+      }
+    }); // Save selection button
+    this.saveSelectionBtn.addEventListener("click", () => {
+      this.saveCurrentSelection();
+    });
+
+    // Clear all selections button
+    this.clearAllSelectionsBtn.addEventListener("click", () => {
+      this.clearAllSelections();
+    });
+
+    // Expand curve button
+    this.expandCurveBtn.addEventListener("click", () => {
+      this.toggleCurveExpansion();
+    });
+
+    // Close expanded view on Escape key
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && this.isExpanded) {
+        this.toggleCurveExpansion();
+      }
+    });
+
+    // Window resize handler for canvas
+    window.addEventListener("resize", () => {
+      if (this.normalCurve) {
+        this.normalCurve.resize();
+      }
+    });
+  }
+
+  renderTable() {
+    const tableData = zTableData.getTableData(this.isNegativeTable);
+    const rowHeaders = zTableData.getRowHeaders(this.isNegativeTable);
+    const colHeaders = zTableData.getColumnHeaders();
+
+    // Clear existing table
+    this.zTable.innerHTML = "";
+
+    // Create header row
+    const headerRow = document.createElement("tr");
+    const cornerCell = document.createElement("th");
+    cornerCell.textContent = "z";
+    headerRow.appendChild(cornerCell);
+
+    colHeaders.forEach((col) => {
+      const th = document.createElement("th");
+      th.textContent = `.${col}`;
+      headerRow.appendChild(th);
+    });
+
+    this.zTable.appendChild(headerRow);
+
+    // Create data rows
+    rowHeaders.forEach((row) => {
+      const tr = document.createElement("tr");
+
+      // Row header
+      const rowHeaderCell = document.createElement("td");
+      const zValue = this.isNegativeTable ? `-${row}` : row;
+      rowHeaderCell.textContent = zValue;
+      tr.appendChild(rowHeaderCell);
+
+      // Data cells
+      colHeaders.forEach((col) => {
+        const td = document.createElement("td");
+        const probability = tableData[row][col];
+        td.textContent = probability;
+        td.className = "probability-cell";
+        td.dataset.z = this.isNegativeTable
+          ? (-(parseFloat(row) + parseFloat(col) / 100)).toFixed(2)
+          : (parseFloat(row) + parseFloat(col) / 100).toFixed(2);
+        td.dataset.prob = probability;
+
+        // Add click listener
+        td.addEventListener("click", (e) => {
+          this.selectCell(e.target);
+        });
+
+        tr.appendChild(td);
+      });
+
+      this.zTable.appendChild(tr);
+    }); // Update table title
+    this.tableTitle.textContent = this.isNegativeTable
+      ? "Negative Z-Table"
+      : "Positive Z-Table";
+    this.toggleTableBtn.textContent = this.isNegativeTable
+      ? "Switch to Positive Z-Table"
+      : "Switch to Negative Z-Table";
+
+    // Apply current font size
+    this.updateTableFontSize();
+  }
+  selectCell(cell) {
+    // Clear previous selection
+    this.clearSelection();
+
+    // Set new selection
+    this.selectedCell = cell;
+    this.selectedZ = parseFloat(cell.dataset.z);
+    this.selectedProb = parseFloat(cell.dataset.prob);
+
+    // Highlight cell, row, and column
+    cell.classList.add("selected-cell");
+
+    // Highlight row (including row header)
+    const row = cell.parentElement;
+    Array.from(row.children).forEach((td) => {
+      if (!td.classList.contains("selected-cell")) {
+        td.classList.add("highlighted-row");
+      }
+    });
+
+    // Highlight column (including column header)
+    const cellIndex = Array.from(row.children).indexOf(cell);
+    const table = cell.closest("table");
+    Array.from(table.rows).forEach((tr, rowIndex) => {
+      const targetCell = tr.children[cellIndex];
+      if (targetCell && !targetCell.classList.contains("selected-cell")) {
+        targetCell.classList.add("highlighted-col");
+      }
+    });
+
+    // Update info display
+    this.updateInfoDisplay();
+
+    // Update normal curve
+    this.normalCurve.updateCurve(this.selectedZ, this.isNegativeTable);
+
+    // Enable save button
+    this.saveSelectionBtn.disabled = false;
+  }
+  clearSelection() {
+    // Remove all highlights from both td and th elements
+    const allCells = this.zTable.querySelectorAll("td, th");
+    allCells.forEach((cell) => {
+      cell.classList.remove(
+        "selected-cell",
+        "highlighted-row",
+        "highlighted-col"
+      );
+    });
+
+    // Clear selection data
+    this.selectedCell = null;
+    this.selectedZ = null;
+    this.selectedProb = null;
+
+    // Disable save button
+    this.saveSelectionBtn.disabled = true;
+  }
+
+  updateInfoDisplay() {
+    if (this.selectedZ !== null && this.selectedProb !== null) {
+      this.selectedZSpan.textContent = zTableData.formatZScore(this.selectedZ);
+      this.selectedProbSpan.textContent = zTableData.formatProbability(
+        this.selectedProb
+      );
+      this.areaValueSpan.textContent = zTableData.formatProbability(
+        this.selectedProb
+      );
+    } else {
+      this.selectedZSpan.textContent = "None";
+      this.selectedProbSpan.textContent = "None";
+      this.areaValueSpan.textContent = "None";
+    }
+  }
+
+  toggleTable() {
+    this.isNegativeTable = !this.isNegativeTable;
+    this.clearSelection();
+    this.renderTable();
+    this.updateInfoDisplay();
+    this.normalCurve.clearSelection();
+  }
+
+  decreaseTableFontSize() {
+    // Minimum font size of 0.5rem
+    if (this.tableFontSize > 0.5) {
+      this.tableFontSize -= 0.1;
+      this.updateTableFontSize();
+    }
+  }
+
+  increaseTableFontSize() {
+    // Maximum font size of 1.5rem
+    if (this.tableFontSize < 1.5) {
+      this.tableFontSize += 0.1;
+      this.updateTableFontSize();
+    }
+  }
+
+  updateTableFontSize() {
+    this.zTable.style.fontSize = this.tableFontSize + "rem";
+  }
+
+  performReverseLookup() {
+    const zValue = parseFloat(this.zInput.value);
+    if (isNaN(zValue) || !zTableData.isValidZScore(zValue)) {
+      alert("Please enter a valid z-score between -3.5 and 3.5");
+      return;
+    }
+
+    // Determine which table to use based on z-value sign
+    const shouldUseNegativeTable = zValue < 0;
+
+    // Switch table if necessary
+    if (shouldUseNegativeTable !== this.isNegativeTable) {
+      this.isNegativeTable = shouldUseNegativeTable;
+      this.renderTable();
+    }
+
+    // Find and select the corresponding cell
+    const targetZ = zValue.toFixed(2);
+    const targetCell = this.zTable.querySelector(`[data-z="${targetZ}"]`);
+
+    if (targetCell) {
+      this.selectCell(targetCell);
+
+      // Scroll cell into view
+      targetCell.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "center",
+      });
+    } else {
+      // If exact match not found, get closest probability
+      const probability = zTableData.getProbability(
+        zValue,
+        shouldUseNegativeTable
+      );
+
+      // Update displays without cell selection
+      this.selectedZ = zValue;
+      this.selectedProb = probability;
+      this.updateInfoDisplay();
+      this.normalCurve.updateCurve(zValue, shouldUseNegativeTable);
+      this.saveSelectionBtn.disabled = false;
+    }
+  }
+  performAreaLookup() {
+    const areaValue = parseFloat(this.areaInput.value);
+
+    // Validate input
+    if (isNaN(areaValue) || areaValue <= 0 || areaValue >= 1) {
+      alert(
+        "Please enter a valid area (probability) between 0.0001 and 0.9999"
+      );
+      return;
+    }
+
+    // Special validation for extreme values
+    if (areaValue < 0.0001 || areaValue > 0.9999) {
+      alert(
+        "Area must be between 0.0001 and 0.9999 for accurate lookup in the z-table"
+      );
+      return;
+    }
+
+    // Find the closest z-score for the given area
+    // We need to search both tables to find the best match
+    let bestZ = 0;
+    let bestDiff = Infinity;
+    let useNegativeTable = false;
+
+    // Search negative table (z < 0, probabilities < 0.5)
+    const negativeZ = zTableData.getZScore(areaValue, true);
+    const negativeProbability = zTableData.getProbability(negativeZ, true);
+    const negativeDiff = Math.abs(negativeProbability - areaValue);
+
+    // Search positive table (z >= 0, probabilities >= 0.5)
+    const positiveZ = zTableData.getZScore(areaValue, false);
+    const positiveProbability = zTableData.getProbability(positiveZ, false);
+    const positiveDiff = Math.abs(positiveProbability - areaValue);
+
+    // Choose the table with the closest match
+    if (negativeDiff <= positiveDiff) {
+      bestZ = negativeZ;
+      useNegativeTable = true;
+    } else {
+      bestZ = positiveZ;
+      useNegativeTable = false;
+    }
+
+    // Switch to the appropriate table if necessary
+    if (useNegativeTable !== this.isNegativeTable) {
+      this.isNegativeTable = useNegativeTable;
+      this.renderTable();
+    }
+
+    // Find and select the corresponding cell
+    const targetZFormatted = bestZ.toFixed(2);
+    const targetCell = this.zTable.querySelector(
+      `[data-z="${targetZFormatted}"]`
+    );
+
+    if (targetCell) {
+      this.selectCell(targetCell);
+
+      // Scroll cell into view
+      targetCell.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "center",
+      });
+    } else {
+      // Fallback: Update displays without cell selection
+      const actualProbability = zTableData.getProbability(
+        bestZ,
+        useNegativeTable
+      );
+
+      this.selectedZ = bestZ;
+      this.selectedProb = actualProbability;
+      this.updateInfoDisplay();
+      this.normalCurve.updateCurve(bestZ, useNegativeTable);
+      this.saveSelectionBtn.disabled = false;
+    }
+  }
+
+  saveCurrentSelection() {
+    if (this.selectedZ !== null && this.selectedProb !== null) {
+      const selection = {
+        zScore: this.selectedZ,
+        probability: this.selectedProb,
+        timestamp: new Date().toISOString(),
+      };
+
+      this.savedSelections.push(selection);
+      this.saveTolocalStorage();
+      this.renderSavedSelections();
+    }
+  }
+
+  loadSavedSelections() {
+    const saved = localStorage.getItem("standard-normal-selections");
+    if (saved) {
+      try {
+        this.savedSelections = JSON.parse(saved);
+        this.renderSavedSelections();
+      } catch (e) {
+        console.error("Error loading saved selections:", e);
         this.savedSelections = [];
-        this.tableFontSize = 0.85; // Default font size in rem
-        
-        this.initializeElements();
-        this.loadSavedSelections();
-        this.setupEventListeners();
-        this.renderTable();
-        this.normalCurve = new NormalCurve('normalCurve');
+      }
+    }
+  }
+
+  saveTolocalStorage() {
+    try {
+      localStorage.setItem(
+        "standard-normal-selections",
+        JSON.stringify(this.savedSelections)
+      );
+    } catch (e) {
+      console.error("Error saving selections:", e);
+    }
+  }
+  deleteSelection(index) {
+    if (index >= 0 && index < this.savedSelections.length) {
+      this.savedSelections.splice(index, 1);
+      this.saveTolocalStorage();
+      this.renderSavedSelections();
+    }
+  }
+
+  clearAllSelections() {
+    if (this.savedSelections.length === 0) {
+      return; // Nothing to clear
     }
 
-    initializeElements() {
-        // Table elements
-        this.zTable = document.getElementById('zTable');
-        this.tableTitle = document.getElementById('tableTitle');
-        this.toggleTableBtn = document.getElementById('toggleTable');
-        
-        // Font size control elements
-        this.decreaseFontBtn = document.getElementById('decreaseFontSize');
-        this.increaseFontBtn = document.getElementById('increaseFontSize');
-          // Input elements
-        this.zInput = document.getElementById('zInput');
-        this.lookupBtn = document.getElementById('lookupBtn');
-        
-        // Area lookup elements
-        this.areaInput = document.getElementById('areaInput');
-        this.areaLookupBtn = document.getElementById('areaLookupBtn');
-        
-        // Info display elements
-        this.selectedZSpan = document.getElementById('selectedZ');
-        this.selectedProbSpan = document.getElementById('selectedProb');
-        this.areaValueSpan = document.getElementById('areaValue');
-          // Saved selections elements
-        this.saveSelectionBtn = document.getElementById('saveSelection');
-        this.clearAllSelectionsBtn = document.getElementById('clearAllSelections');
-        this.savedList = document.getElementById('savedList');
-        
-        // Curve expand elements
-        this.expandCurveBtn = document.getElementById('expandCurve');
-        this.curveSection = document.querySelector('.curve-section');
-        this.isExpanded = false;
+    if (
+      confirm(
+        "Are you sure you want to delete all saved selections? This action cannot be undone."
+      )
+    ) {
+      this.savedSelections = [];
+      this.saveTolocalStorage();
+      this.renderSavedSelections();
     }
+  }
+  renderSavedSelections() {
+    this.savedList.innerHTML = "";
 
-    setupEventListeners() {        // Toggle table button
-        this.toggleTableBtn.addEventListener('click', () => {
-            this.toggleTable();
-        });
+    // Enable/disable the clear all button based on whether there are selections
+    this.clearAllSelectionsBtn.disabled = this.savedSelections.length === 0;
 
-        // Font size control buttons
-        this.decreaseFontBtn.addEventListener('click', () => {
-            this.decreaseTableFontSize();
-        });
-
-        this.increaseFontBtn.addEventListener('click', () => {
-            this.increaseTableFontSize();
-        });
-
-        // Reverse lookup
-        this.lookupBtn.addEventListener('click', () => {
-            this.performReverseLookup();
-        });        this.zInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.performReverseLookup();
-            }
-        });
-
-        // Area lookup
-        this.areaLookupBtn.addEventListener('click', () => {
-            this.performAreaLookup();
-        });
-
-        this.areaInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.performAreaLookup();
-            }
-        });// Save selection button
-        this.saveSelectionBtn.addEventListener('click', () => {
-            this.saveCurrentSelection();
-        });
-
-        // Clear all selections button
-        this.clearAllSelectionsBtn.addEventListener('click', () => {
-            this.clearAllSelections();
-        });
-
-        // Expand curve button
-        this.expandCurveBtn.addEventListener('click', () => {
-            this.toggleCurveExpansion();
-        });
-
-        // Close expanded view on Escape key
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.isExpanded) {
-                this.toggleCurveExpansion();
-            }
-        });
-
-        // Window resize handler for canvas
-        window.addEventListener('resize', () => {
-            if (this.normalCurve) {
-                this.normalCurve.resize();
-            }
-        });
+    if (this.savedSelections.length === 0) {
+      const emptyMsg = document.createElement("div");
+      emptyMsg.textContent = "No saved selections yet.";
+      emptyMsg.style.color = "#666";
+      emptyMsg.style.fontStyle = "italic";
+      emptyMsg.style.textAlign = "center";
+      emptyMsg.style.padding = "1rem";
+      this.savedList.appendChild(emptyMsg);
+      return;
     }
+    this.savedSelections.forEach((selection, index) => {
+      const item = document.createElement("div");
+      item.className = "saved-item";
 
-    renderTable() {
-        const tableData = zTableData.getTableData(this.isNegativeTable);
-        const rowHeaders = zTableData.getRowHeaders(this.isNegativeTable);
-        const colHeaders = zTableData.getColumnHeaders();
+      // Create content container for the clickable area
+      const content = document.createElement("div");
+      content.className = "saved-item-content";
 
-        // Clear existing table
-        this.zTable.innerHTML = '';
+      const zValue = document.createElement("span");
+      zValue.className = "z-value";
+      zValue.textContent = `z = ${zTableData.formatZScore(selection.zScore)}`;
 
-        // Create header row
-        const headerRow = document.createElement('tr');
-        const cornerCell = document.createElement('th');
-        cornerCell.textContent = 'z';
-        headerRow.appendChild(cornerCell);
+      const probValue = document.createElement("span");
+      probValue.className = "prob-value";
+      probValue.textContent = `P = ${zTableData.formatProbability(
+        selection.probability
+      )}`;
 
-        colHeaders.forEach(col => {
-            const th = document.createElement('th');
-            th.textContent = `.${col}`;
-            headerRow.appendChild(th);
-        });
+      content.appendChild(zValue);
+      content.appendChild(probValue);
 
-        this.zTable.appendChild(headerRow);
+      // Add click handler to re-select this value
+      content.addEventListener("click", () => {
+        this.zInput.value = selection.zScore;
+        this.performReverseLookup();
+      });
 
-        // Create data rows
-        rowHeaders.forEach(row => {
-            const tr = document.createElement('tr');
-            
-            // Row header
-            const rowHeaderCell = document.createElement('td');
-            const zValue = this.isNegativeTable ? `-${row}` : row;
-            rowHeaderCell.textContent = zValue;
-            tr.appendChild(rowHeaderCell);
+      content.title = "Click to select this z-score";
 
-            // Data cells
-            colHeaders.forEach(col => {
-                const td = document.createElement('td');
-                const probability = tableData[row][col];
-                td.textContent = probability;
-                td.className = 'probability-cell';
-                td.dataset.z = this.isNegativeTable ? 
-                    (-(parseFloat(row) + parseFloat(col) / 100)).toFixed(2) :
-                    (parseFloat(row) + parseFloat(col) / 100).toFixed(2);
-                td.dataset.prob = probability;
-                
-                // Add click listener
-                td.addEventListener('click', (e) => {
-                    this.selectCell(e.target);
-                });
+      // Create delete button
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "delete-btn";
+      deleteBtn.textContent = "×";
+      deleteBtn.title = "Delete this saved selection";
+      deleteBtn.addEventListener("click", (e) => {
+        e.stopPropagation(); // Prevent triggering the item click
+        if (confirm("Are you sure you want to delete this saved selection?")) {
+          this.deleteSelection(index);
+        }
+      });
 
-                tr.appendChild(td);
-            });
+      item.appendChild(content);
+      item.appendChild(deleteBtn);
+      this.savedList.appendChild(item);
+    });
+  }
 
-            this.zTable.appendChild(tr);
-        });        // Update table title
-        this.tableTitle.textContent = this.isNegativeTable ? 'Negative Z-Table' : 'Positive Z-Table';
-        this.toggleTableBtn.textContent = this.isNegativeTable ? 
-            'Switch to Positive Z-Table' : 'Switch to Negative Z-Table';
-        
-        // Apply current font size
-        this.updateTableFontSize();
-    }selectCell(cell) {
-        // Clear previous selection
-        this.clearSelection();
+  toggleCurveExpansion() {
+    this.isExpanded = !this.isExpanded;
+    const canvas = document.getElementById("normalCurve");
 
-        // Set new selection
-        this.selectedCell = cell;
-        this.selectedZ = parseFloat(cell.dataset.z);
-        this.selectedProb = parseFloat(cell.dataset.prob);
+    if (this.isExpanded) {
+      this.curveSection.classList.add("curve-expanded");
+      this.expandCurveBtn.textContent = "Close";
 
-        // Highlight cell, row, and column
-        cell.classList.add('selected-cell');
-        
-        // Highlight row (including row header)
-        const row = cell.parentElement;
-        Array.from(row.children).forEach(td => {
-            if (!td.classList.contains('selected-cell')) {
-                td.classList.add('highlighted-row');
-            }
-        });
+      // Save logical (CSS) size, not backing-store size
+      const cssW = this.normalCurve
+        ? this.normalCurve.width
+        : canvas.clientWidth || 400;
+      const cssH = this.normalCurve
+        ? this.normalCurve.height
+        : canvas.clientHeight || 300;
+      canvas.dataset.originalCssWidth = String(cssW);
+      canvas.dataset.originalCssHeight = String(cssH);
 
-        // Highlight column (including column header)
-        const cellIndex = Array.from(row.children).indexOf(cell);
-        const table = cell.closest('table');
-        Array.from(table.rows).forEach((tr, rowIndex) => {
-            const targetCell = tr.children[cellIndex];
-            if (targetCell && !targetCell.classList.contains('selected-cell')) {
-                targetCell.classList.add('highlighted-col');
-            }
-        });
+      // Set larger logical size
+      const expandedWidth = Math.min(window.innerWidth * 0.9, 1600);
+      const expandedHeight = Math.min(window.innerHeight * 0.65, 900);
+      canvas.style.width = expandedWidth + "px";
+      canvas.style.height = expandedHeight + "px";
 
-        // Update info display
-        this.updateInfoDisplay();
+      // Recreate curve so it picks up new logical size
+      this.normalCurve = new NormalCurve("normalCurve");
 
-        // Update normal curve
+      if (this.selectedZ !== null) {
         this.normalCurve.updateCurve(this.selectedZ, this.isNegativeTable);
+      }
+    } else {
+      this.curveSection.classList.remove("curve-expanded");
+      this.expandCurveBtn.textContent = "Expand";
 
-        // Enable save button
-        this.saveSelectionBtn.disabled = false;
-    }clearSelection() {
-        // Remove all highlights from both td and th elements
-        const allCells = this.zTable.querySelectorAll('td, th');
-        allCells.forEach(cell => {
-            cell.classList.remove('selected-cell', 'highlighted-row', 'highlighted-col');
-        });
+      // Restore logical (CSS) size we saved earlier
+      const cssW = parseFloat(canvas.dataset.originalCssWidth || "400");
+      const cssH = parseFloat(canvas.dataset.originalCssHeight || "300");
+      canvas.style.width = cssW + "px";
+      canvas.style.height = cssH + "px";
 
-        // Clear selection data
-        this.selectedCell = null;
-        this.selectedZ = null;
-        this.selectedProb = null;
+      // Recreate curve at original logical size
+      this.normalCurve = new NormalCurve("normalCurve");
 
-        // Disable save button
-        this.saveSelectionBtn.disabled = true;
+      if (this.selectedZ !== null) {
+        this.normalCurve.updateCurve(this.selectedZ, this.isNegativeTable);
+      }
     }
-
-    updateInfoDisplay() {
-        if (this.selectedZ !== null && this.selectedProb !== null) {
-            this.selectedZSpan.textContent = zTableData.formatZScore(this.selectedZ);
-            this.selectedProbSpan.textContent = zTableData.formatProbability(this.selectedProb);
-            this.areaValueSpan.textContent = zTableData.formatProbability(this.selectedProb);
-        } else {
-            this.selectedZSpan.textContent = 'None';
-            this.selectedProbSpan.textContent = 'None';
-            this.areaValueSpan.textContent = 'None';
-        }
-    }
-
-    toggleTable() {
-        this.isNegativeTable = !this.isNegativeTable;
-        this.clearSelection();
-        this.renderTable();
-        this.updateInfoDisplay();
-        this.normalCurve.clearSelection();
-    }
-
-    decreaseTableFontSize() {
-        // Minimum font size of 0.5rem
-        if (this.tableFontSize > 0.5) {
-            this.tableFontSize -= 0.1;
-            this.updateTableFontSize();
-        }
-    }
-
-    increaseTableFontSize() {
-        // Maximum font size of 1.5rem
-        if (this.tableFontSize < 1.5) {
-            this.tableFontSize += 0.1;
-            this.updateTableFontSize();
-        }
-    }
-
-    updateTableFontSize() {
-        this.zTable.style.fontSize = this.tableFontSize + 'rem';
-    }
-
-    performReverseLookup() {
-        const zValue = parseFloat(this.zInput.value);
-          if (isNaN(zValue) || !zTableData.isValidZScore(zValue)) {
-            alert('Please enter a valid z-score between -3.5 and 3.5');
-            return;
-        }
-
-        // Determine which table to use based on z-value sign
-        const shouldUseNegativeTable = zValue < 0;
-        
-        // Switch table if necessary
-        if (shouldUseNegativeTable !== this.isNegativeTable) {
-            this.isNegativeTable = shouldUseNegativeTable;
-            this.renderTable();
-        }
-
-        // Find and select the corresponding cell
-        const targetZ = zValue.toFixed(2);
-        const targetCell = this.zTable.querySelector(`[data-z="${targetZ}"]`);
-        
-        if (targetCell) {
-            this.selectCell(targetCell);
-            
-            // Scroll cell into view
-            targetCell.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'center',
-                inline: 'center'
-            });
-        } else {
-            // If exact match not found, get closest probability
-            const probability = zTableData.getProbability(zValue, shouldUseNegativeTable);
-            
-            // Update displays without cell selection
-            this.selectedZ = zValue;
-            this.selectedProb = probability;
-            this.updateInfoDisplay();
-            this.normalCurve.updateCurve(zValue, shouldUseNegativeTable);            this.saveSelectionBtn.disabled = false;
-        }
-    }    performAreaLookup() {
-        const areaValue = parseFloat(this.areaInput.value);
-        
-        // Validate input
-        if (isNaN(areaValue) || areaValue <= 0 || areaValue >= 1) {
-            alert('Please enter a valid area (probability) between 0.0001 and 0.9999');
-            return;
-        }
-
-        // Special validation for extreme values
-        if (areaValue < 0.0001 || areaValue > 0.9999) {
-            alert('Area must be between 0.0001 and 0.9999 for accurate lookup in the z-table');
-            return;
-        }
-
-        // Find the closest z-score for the given area
-        // We need to search both tables to find the best match
-        let bestZ = 0;
-        let bestDiff = Infinity;
-        let useNegativeTable = false;
-
-        // Search negative table (z < 0, probabilities < 0.5)
-        const negativeZ = zTableData.getZScore(areaValue, true);
-        const negativeProbability = zTableData.getProbability(negativeZ, true);
-        const negativeDiff = Math.abs(negativeProbability - areaValue);
-
-        // Search positive table (z >= 0, probabilities >= 0.5)  
-        const positiveZ = zTableData.getZScore(areaValue, false);
-        const positiveProbability = zTableData.getProbability(positiveZ, false);
-        const positiveDiff = Math.abs(positiveProbability - areaValue);
-
-        // Choose the table with the closest match
-        if (negativeDiff <= positiveDiff) {
-            bestZ = negativeZ;
-            useNegativeTable = true;
-        } else {
-            bestZ = positiveZ;
-            useNegativeTable = false;
-        }
-
-        // Switch to the appropriate table if necessary
-        if (useNegativeTable !== this.isNegativeTable) {
-            this.isNegativeTable = useNegativeTable;
-            this.renderTable();
-        }
-
-        // Find and select the corresponding cell
-        const targetZFormatted = bestZ.toFixed(2);
-        const targetCell = this.zTable.querySelector(`[data-z="${targetZFormatted}"]`);
-        
-        if (targetCell) {
-            this.selectCell(targetCell);
-            
-            // Scroll cell into view
-            targetCell.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'center',
-                inline: 'center'
-            });
-        } else {
-            // Fallback: Update displays without cell selection
-            const actualProbability = zTableData.getProbability(bestZ, useNegativeTable);
-            
-            this.selectedZ = bestZ;
-            this.selectedProb = actualProbability;
-            this.updateInfoDisplay();
-            this.normalCurve.updateCurve(bestZ, useNegativeTable);
-            this.saveSelectionBtn.disabled = false;
-        }
-    }
-
-    saveCurrentSelection() {
-        if (this.selectedZ !== null && this.selectedProb !== null) {
-            const selection = {
-                zScore: this.selectedZ,
-                probability: this.selectedProb,
-                timestamp: new Date().toISOString()
-            };
-
-            this.savedSelections.push(selection);
-            this.saveTolocalStorage();
-            this.renderSavedSelections();
-        }
-    }
-
-    loadSavedSelections() {
-        const saved = localStorage.getItem('standard-normal-selections');
-        if (saved) {
-            try {
-                this.savedSelections = JSON.parse(saved);
-                this.renderSavedSelections();
-            } catch (e) {
-                console.error('Error loading saved selections:', e);
-                this.savedSelections = [];
-            }
-        }
-    }
-
-    saveTolocalStorage() {
-        try {
-            localStorage.setItem('standard-normal-selections', JSON.stringify(this.savedSelections));
-        } catch (e) {
-            console.error('Error saving selections:', e);
-        }
-    }    deleteSelection(index) {
-        if (index >= 0 && index < this.savedSelections.length) {
-            this.savedSelections.splice(index, 1);
-            this.saveTolocalStorage();
-            this.renderSavedSelections();
-        }
-    }
-
-    clearAllSelections() {
-        if (this.savedSelections.length === 0) {
-            return; // Nothing to clear
-        }
-        
-        if (confirm('Are you sure you want to delete all saved selections? This action cannot be undone.')) {
-            this.savedSelections = [];
-            this.saveTolocalStorage();
-            this.renderSavedSelections();
-        }
-    }    renderSavedSelections() {
-        this.savedList.innerHTML = '';
-
-        // Enable/disable the clear all button based on whether there are selections
-        this.clearAllSelectionsBtn.disabled = this.savedSelections.length === 0;
-
-        if (this.savedSelections.length === 0) {
-            const emptyMsg = document.createElement('div');
-            emptyMsg.textContent = 'No saved selections yet.';
-            emptyMsg.style.color = '#666';
-            emptyMsg.style.fontStyle = 'italic';
-            emptyMsg.style.textAlign = 'center';
-            emptyMsg.style.padding = '1rem';
-            this.savedList.appendChild(emptyMsg);
-            return;
-        }this.savedSelections.forEach((selection, index) => {
-            const item = document.createElement('div');
-            item.className = 'saved-item';
-
-            // Create content container for the clickable area
-            const content = document.createElement('div');
-            content.className = 'saved-item-content';
-
-            const zValue = document.createElement('span');
-            zValue.className = 'z-value';
-            zValue.textContent = `z = ${zTableData.formatZScore(selection.zScore)}`;
-
-            const probValue = document.createElement('span');
-            probValue.className = 'prob-value';
-            probValue.textContent = `P = ${zTableData.formatProbability(selection.probability)}`;
-
-            content.appendChild(zValue);
-            content.appendChild(probValue);
-
-            // Add click handler to re-select this value
-            content.addEventListener('click', () => {
-                this.zInput.value = selection.zScore;
-                this.performReverseLookup();
-            });
-
-            content.title = 'Click to select this z-score';
-
-            // Create delete button
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'delete-btn';
-            deleteBtn.textContent = '×';
-            deleteBtn.title = 'Delete this saved selection';
-            deleteBtn.addEventListener('click', (e) => {
-                e.stopPropagation(); // Prevent triggering the item click
-                if (confirm('Are you sure you want to delete this saved selection?')) {
-                    this.deleteSelection(index);
-                }
-            });
-
-            item.appendChild(content);
-            item.appendChild(deleteBtn);
-            this.savedList.appendChild(item);
-        });
-    }
-
-    toggleCurveExpansion() {
-        this.isExpanded = !this.isExpanded;
-          if (this.isExpanded) {
-            // Add expanded class
-            this.curveSection.classList.add('curve-expanded');
-            this.expandCurveBtn.textContent = 'Close';
-            
-            // Resize canvas for larger view
-            const canvas = document.getElementById('normalCurve');
-            const originalWidth = canvas.width;
-            const originalHeight = canvas.height;
-            
-            // Store original dimensions
-            canvas.dataset.originalWidth = originalWidth;
-            canvas.dataset.originalHeight = originalHeight;
-            
-            // Set much larger dimensions for expanded view
-            const expandedWidth = Math.min(window.innerWidth * 0.9, 1600);
-            const expandedHeight = Math.min(window.innerHeight * 0.65, 900);
-            
-            // Update both canvas attributes and style
-            canvas.width = expandedWidth;
-            canvas.height = expandedHeight;
-            canvas.style.width = expandedWidth + 'px';
-            canvas.style.height = expandedHeight + 'px';
-              // Force a redraw by recreating the NormalCurve instance
-            this.normalCurve = new NormalCurve('normalCurve');
-            
-            // Restore the current selection if any
-            if (this.selectedZ !== null) {
-                this.normalCurve.updateCurve(this.selectedZ, this.isNegativeTable);
-            }
-        } else {
-            // Remove expanded class
-            this.curveSection.classList.remove('curve-expanded');
-            this.expandCurveBtn.textContent = 'Expand';
-            
-            // Restore original canvas dimensions
-            const canvas = document.getElementById('normalCurve');
-            const originalWidth = canvas.dataset.originalWidth || 400;
-            const originalHeight = canvas.dataset.originalHeight || 300;
-            
-            // Update both canvas attributes and style
-            canvas.width = originalWidth;
-            canvas.height = originalHeight;
-            canvas.style.width = originalWidth + 'px';
-            canvas.style.height = originalHeight + 'px';
-            
-            // Force a redraw by recreating the NormalCurve instance
-            this.normalCurve = new NormalCurve('normalCurve');
-            
-            // Restore the current selection if any
-            if (this.selectedZ !== null) {
-                this.normalCurve.updateCurve(this.selectedZ, this.isNegativeTable);
-            }
-        }
-    }
+  }
 }
 
 // Initialize the application when DOM is loaded
